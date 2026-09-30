@@ -3,6 +3,29 @@ import 'package:flutter/material.dart';
 const String studentName = 'I Putu Agus Martha Jaya';
 const String studentId = '2415051097';
 
+Widget buildStatCard(String value, String label, IconData icon) {
+  return Expanded(
+    child: Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          children: [
+            Icon(icon),
+            const SizedBox(height: 6),
+            Text(
+              value,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(label),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
 void main() {
   runApp(const MyApp());
 }
@@ -85,51 +108,31 @@ class MyApp extends StatelessWidget {
                       ),
                     ),
                     SizedBox(height: 8),
-                    Text('Belajar membuat tampilan Flutter dengan widget dasar.'),
+                    Text(
+                      'Belajar membuat tampilan Flutter dengan widget dasar.',
+                    ),
                   ],
                 ),
               ),
 
               const SizedBox(height: 16),
 
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              Row(
                 children: [
-                  Column(
-                    children: [
-                      Text(
-                        '8',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text('Widget'),
-                    ],
+                  buildStatCard(
+                    '8',
+                    'Widget',
+                    Icons.widgets,
                   ),
-                  Column(
-                    children: [
-                      Text(
-                        '4',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text('Layout'),
-                    ],
+                  buildStatCard(
+                    '4',
+                    'Layout',
+                    Icons.view_quilt,
                   ),
-                  Column(
-                    children: [
-                      Text(
-                        '1',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text('State'),
-                    ],
+                  buildStatCard(
+                    '1',
+                    'State',
+                    Icons.sync,
                   ),
                 ],
               ),
