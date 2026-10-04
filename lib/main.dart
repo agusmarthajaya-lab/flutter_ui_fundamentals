@@ -26,6 +26,9 @@ final List<Map<String, dynamic>> topics = [
   },
 ];
 
+final int completed =
+    topics.where((item) => item['done'] == true).length;
+
 Widget buildStatCard(String value, String label, IconData icon) {
   return Expanded(
     child: Card(
@@ -159,7 +162,7 @@ class MyApp extends StatelessWidget {
               child: Column(
                 children: [
                   Text(
-                    'Tahap 10 - Collection & List',
+                    'Tahap 11 - List Informatif',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -176,23 +179,43 @@ class MyApp extends StatelessWidget {
               ),
             ),
 
+            Text(
+              '$completed dari ${topics.length} topik selesai',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
             Expanded(
               child: ListView.builder(
                 itemCount: topics.length,
                 itemBuilder: (context, index) {
                   final item = topics[index];
 
-                  return ListTile(
-                    leading: Icon(
-                      item['done'] == true
-                          ? Icons.check_circle
-                          : Icons.circle_outlined,
+                  return Card(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
                     ),
-                    title: Text(
-                      item['title'] as String,
-                    ),
-                    subtitle: Text(
-                      item['subtitle'] as String,
+                    child: ListTile(
+                      leading: Icon(
+                        item['done'] == true
+                            ? Icons.check_circle
+                            : Icons.schedule,
+                      ),
+                      title: Text(
+                        item['title'] as String,
+                      ),
+                      subtitle: Text(
+                        item['subtitle'] as String,
+                      ),
+                      trailing: Text(
+                        item['done'] == true
+                            ? 'Selesai'
+                            : 'Belum',
+                      ),
                     ),
                   );
                 },
