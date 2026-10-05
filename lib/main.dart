@@ -13,233 +13,118 @@ Future<Map<String, dynamic>> loadStudentData() async {
   return jsonDecode(jsonString) as Map<String, dynamic>;
 }
 
-final List<Map<String, dynamic>> topics = [
-  {
-    'title': 'Git & GitHub',
-    'subtitle': 'Version control',
-    'done': true,
-  },
-  {
-    'title': 'Dart Fundamentals',
-    'subtitle': 'Language basics',
-    'done': true,
-  },
-  {
-    'title': 'Flutter UI Fundamentals',
-    'subtitle': 'Widgets & layout',
-    'done': false,
-  },
-  {
-    'title': '$studentId - $studentName',
-    'subtitle': 'Pemilik aplikasi',
-    'done': false,
-  },
-];
+// Tahap 13: FutureBuilder
+class DashboardPage extends StatefulWidget {
+  const DashboardPage({super.key});
 
-final int completed =
-    topics.where((item) => item['done'] == true).length;
+  @override
+  State<DashboardPage> createState() => _DashboardPageState();
+}
 
-Widget buildStatCard(String value, String label, IconData icon) {
-  return Expanded(
-    child: Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          children: [
-            Icon(icon),
-            const SizedBox(height: 6),
-            Text(
-              value,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(label),
-          ],
-        ),
+class _DashboardPageState extends State<DashboardPage> {
+  // Future disimpan di sini
+  late Future<Map<String, dynamic>> studentFuture;
+
+  // Future dijalankan satu kali
+  @override
+  void initState() {
+    super.initState();
+    studentFuture = loadStudentData();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Learning Dashboard'),
       ),
+
+      body: FutureBuilder<Map<String, dynamic>>(
+        future: studentFuture,
+
+        builder: (context, snapshot) {
+          // 1. Saat data sedang dimuat
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+
+          // 2. Jika terjadi error
+          if (snapshot.hasError) {
+            return Center(
+              child: Text(
+                'Gagal memuat data: ${snapshot.error}',
+              ),
+            );
+          }
+
+          // 3. Jika data berhasil dimuat
+          final data = snapshot.data!;
+
+          // Mengambil data student
+          final student =
+              data['student'] as Map<String, dynamic>;
+
+          // Mengambil data courses
+          final courses = data['courses'] as List<dynamic>;
+
+          return Column(
+            children: [
+              // Informasi mahasiswa
+              ListTile(
+                leading: const Icon(Icons.person),
+                title: Text(
+                  student['name'] as String,
+                ),
+                subtitle: Text(
+                  student['nim'] as String,
+                ),
+              ),
+
+              const Divider(),
+
+              // Daftar mata kuliah
+              Expanded(
+                child: ListView.builder(
+                  itemCount: courses.length,
+                  itemBuilder: (context, index) {
+                    final course =
+                        courses[index] as Map<String, dynamic>;
+
+                    return Card(
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      child: ListTile(
+                        leading: const Icon(
+                          Icons.book,
+                        ),
+                        title: Text(
+                          course['title'] as String,
+                        ),
+                        subtitle: Text(
+                          course['code'] as String,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+void main() {
+  runApp(
+    const MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: DashboardPage(),
     ),
   );
-}
-
-// Tahap 9: StatefulWidget
-class GreetingCard extends StatefulWidget {
-  const GreetingCard({super.key});
-
-  @override
-  State<GreetingCard> createState() => _GreetingCardState();
-}
-
-class _GreetingCardState extends State<GreetingCard> {
-  // Controller untuk menerima input dari TextField
-  final TextEditingController controller = TextEditingController();
-
-  // State yang akan berubah
-  String message = 'Belum ada pesan';
-
-  // Membersihkan controller ketika widget selesai digunakan
-  @override
-  void dispose() {
-    controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            const Text(
-              'Tahap 9 - Input & State',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(height: 8),
-
-            const Text(
-              '$studentId - $studentName',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            TextField(
-              controller: controller,
-              decoration: const InputDecoration(
-                labelText: 'Masukkan pesan',
-                hintText: 'Contoh: Saya sedang belajar Flutter',
-                border: OutlineInputBorder(),
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  message = controller.text.trim().isEmpty
-                      ? 'Input masih kosong'
-                      : controller.text.trim();
-                });
-              },
-              child: const Text('Tampilkan'),
-            ),
-
-            const SizedBox(height: 12),
-
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  final data = await loadStudentData();
-
-  debugPrint('DATA JSON: $data');
-
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Flutter UI Fundamentals'),
-        ),
-        body: Column(
-          children: [
-            const Padding(
-              padding: EdgeInsets.all(12),
-              child: Column(
-                children: [
-                  Text(
-                    'Tahap 11 - List Informatif',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    '$studentId - $studentName',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            Text(
-              '$completed dari ${topics.length} topik selesai',
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(height: 8),
-
-            Expanded(
-              child: ListView.builder(
-                itemCount: topics.length,
-                itemBuilder: (context, index) {
-                  final item = topics[index];
-
-                  return Card(
-                    margin: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    child: ListTile(
-                      leading: Icon(
-                        item['done'] == true
-                            ? Icons.check_circle
-                            : Icons.schedule,
-                      ),
-                      title: Text(
-                        item['title'] as String,
-                      ),
-                      subtitle: Text(
-                        item['subtitle'] as String,
-                      ),
-                      trailing: Text(
-                        item['done'] == true
-                            ? 'Selesai'
-                            : 'Belum',
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
