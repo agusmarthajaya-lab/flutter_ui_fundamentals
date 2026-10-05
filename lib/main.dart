@@ -2,9 +2,6 @@ import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter/material.dart';
 
-const String studentName = 'I Putu Agus Martha Jaya';
-const String studentId = '2415051097';
-
 Future<Map<String, dynamic>> loadStudentData() async {
   final jsonString = await rootBundle.loadString(
     'assets/data/student_data.json',
@@ -13,7 +10,86 @@ Future<Map<String, dynamic>> loadStudentData() async {
   return jsonDecode(jsonString) as Map<String, dynamic>;
 }
 
-// Tahap 13: FutureBuilder
+// Reusable Widget 1: Summary Card
+Widget buildSummaryCard(
+  String value,
+  String label,
+  IconData icon,
+) {
+  return Expanded(
+    child: Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              size: 30,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(label),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+// Reusable Widget 2: Course Card
+Widget buildCourseCard(Map<String, dynamic> course) {
+  final String status = course['status'] as String;
+
+  IconData statusIcon;
+  String statusText;
+
+  if (status == 'done') {
+    statusIcon = Icons.check_circle;
+    statusText = 'Selesai';
+  } else if (status == 'active') {
+    statusIcon = Icons.play_circle;
+    statusText = 'Aktif';
+  } else {
+    statusIcon = Icons.schedule;
+    statusText = 'Direncanakan';
+  }
+
+  return Card(
+    margin: const EdgeInsets.symmetric(
+      horizontal: 12,
+      vertical: 6,
+    ),
+    child: ListTile(
+      leading: Icon(
+        statusIcon,
+        size: 32,
+      ),
+      title: Text(
+        course['title'] as String,
+        style: const TextStyle(
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      subtitle: Text(
+        '${course['code']} • ${course['credits']} SKS',
+      ),
+      trailing: Text(
+        statusText,
+        style: const TextStyle(
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    ),
+  );
+}
+
+// Tahap 14: Mini Project Learning Dashboard
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
 
@@ -22,10 +98,8 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  // Future disimpan di sini
   late Future<Map<String, dynamic>> studentFuture;
 
-  // Future dijalankan satu kali
   @override
   void initState() {
     super.initState();
@@ -41,16 +115,15 @@ class _DashboardPageState extends State<DashboardPage> {
 
       body: FutureBuilder<Map<String, dynamic>>(
         future: studentFuture,
-
         builder: (context, snapshot) {
-          // 1. Saat data sedang dimuat
+          // Loading
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
               child: CircularProgressIndicator(),
             );
           }
 
-          // 2. Jika terjadi error
+          // Error
           if (snapshot.hasError) {
             return Center(
               child: Text(
@@ -59,57 +132,137 @@ class _DashboardPageState extends State<DashboardPage> {
             );
           }
 
-          // 3. Jika data berhasil dimuat
+          // Data berhasil
           final data = snapshot.data!;
 
-          // Mengambil data student
           final student =
               data['student'] as Map<String, dynamic>;
 
-          // Mengambil data courses
-          final courses = data['courses'] as List<dynamic>;
+          final courses =
+              data['courses'] as List<dynamic>;
 
-          return Column(
+          // Menghitung jumlah mata kuliah
+          final int totalCourses = courses.length;
+
+          // Menghitung total SKS
+          final int totalCredits = courses.fold(
+            0,
+            (sum, item) =>
+                sum + (item['credits'] as int),
+          );
+
+          return ListView(
+            padding: const EdgeInsets.only(
+              top: 12,
+              bottom: 20,
+            ),
             children: [
-              // Informasi mahasiswa
-              ListTile(
-                leading: const Icon(Icons.person),
-                title: Text(
-                  student['name'] as String,
+              // =========================
+              // PROFILE
+              // =========================
+              Card(
+                margin: const EdgeInsets.symmetric(
+                  horizontal: 12,
                 ),
-                subtitle: Text(
-                  student['nim'] as String,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      const CircleAvatar(
+                        radius: 40,
+                        backgroundImage: AssetImage(
+                          'assets/images/profile.jpg',
+                        ),
+                      ),
+
+                      const SizedBox(width: 16),
+
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment:
+                              CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              student['name'] as String,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+
+                            const SizedBox(height: 4),
+
+                            Text(
+                              student['nim'] as String,
+                            ),
+
+                            const SizedBox(height: 4),
+
+                            Text(
+                              student['program'] as String,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
-              const Divider(),
+              const SizedBox(height: 12),
 
-              // Daftar mata kuliah
-              Expanded(
-                child: ListView.builder(
-                  itemCount: courses.length,
-                  itemBuilder: (context, index) {
-                    final course =
-                        courses[index] as Map<String, dynamic>;
+              // =========================
+              // SUMMARY
+              // =========================
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                ),
+                child: Row(
+                  children: [
+                    buildSummaryCard(
+                      '$totalCourses',
+                      'Mata Kuliah',
+                      Icons.menu_book,
+                    ),
 
-                    return Card(
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      child: ListTile(
-                        leading: const Icon(
-                          Icons.book,
-                        ),
-                        title: Text(
-                          course['title'] as String,
-                        ),
-                        subtitle: Text(
-                          course['code'] as String,
-                        ),
-                      ),
-                    );
-                  },
+                    const SizedBox(width: 8),
+
+                    buildSummaryCard(
+                      '$totalCredits',
+                      'Total SKS',
+                      Icons.school,
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // =========================
+              // JUDUL COURSE
+              // =========================
+              const Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 12,
+                ),
+                child: Text(
+                  'Daftar Mata Kuliah',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              // =========================
+              // LIST COURSE
+              // =========================
+              ...courses.map(
+                (course) => buildCourseCard(
+                  course as Map<String, dynamic>,
                 ),
               ),
             ],
