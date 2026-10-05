@@ -89,7 +89,7 @@ Widget buildCourseCard(Map<String, dynamic> course) {
   );
 }
 
-// Tahap 14: Mini Project Learning Dashboard
+// Tahap 14 dan 15: Learning Dashboard + Debugging
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
 
@@ -112,7 +112,6 @@ class _DashboardPageState extends State<DashboardPage> {
       appBar: AppBar(
         title: const Text('Learning Dashboard'),
       ),
-
       body: FutureBuilder<Map<String, dynamic>>(
         future: studentFuture,
         builder: (context, snapshot) {
@@ -126,8 +125,30 @@ class _DashboardPageState extends State<DashboardPage> {
           // Error
           if (snapshot.hasError) {
             return Center(
-              child: Text(
-                'Gagal memuat data: ${snapshot.error}',
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      size: 60,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Gagal memuat data',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      '${snapshot.error}',
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
               ),
             );
           }
@@ -203,6 +224,47 @@ class _DashboardPageState extends State<DashboardPage> {
                             ),
                           ],
                         ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              Card(
+                margin: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Kasus A - Layout Aman',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      Row(
+                        crossAxisAlignment:
+                            CrossAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.info),
+                          const SizedBox(width: 8),
+
+                          Expanded(
+                            child: Text(
+                              '2415051097 - I Putu Agus Martha Jaya - Ini adalah teks yang sangat panjang untuk menguji layout dan mencegah RenderFlex overflow',
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
