@@ -4,6 +4,26 @@ import 'package:flutter/material.dart';
 const String studentName = 'I Putu Agus Martha Jaya';
 const String studentId = '2415051097';
 
+// 1. CLASS CHANGENOTIFIER (Digabung dalam satu file agar bebas dari error import)
+class CourseState extends ChangeNotifier {
+  final Set<String> _favorites = {};
+
+  Set<String> get favorites => _favorites;
+
+  bool isFavorite(String id) {
+    return _favorites.contains(id);
+  }
+
+  void toggleFavorite(String id) {
+    if (_favorites.contains(id)) {
+      _favorites.remove(id);
+    } else {
+      _favorites.add(id);
+    }
+    notifyListeners();
+  }
+}
+
 void main() {
   runApp(const CourseExplorerApp());
 }
@@ -14,22 +34,36 @@ class CourseExplorerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Course Explorer v1 - Tahap 4',
+      title: 'Course Explorer v1 - Tahap 5',
       theme: ThemeData(primarySwatch: Colors.blue),
       home: const CourseHomeScreen(),
     );
   }
 }
 
-class CourseHomeScreen extends StatelessWidget {
+class CourseHomeScreen extends StatefulWidget {
   const CourseHomeScreen({super.key});
+
+  @override
+  State<CourseHomeScreen> createState() => _CourseHomeScreenState();
+}
+
+class _CourseHomeScreenState extends State<CourseHomeScreen> {
+  // Inisialisasi object ChangeNotifier
+  final CourseState _courseState = CourseState();
+
+  @override
+  void dispose() {
+    _courseState.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blue,
-        title: const Text('Course Explorer - Tahap 4 (ValueNotifier)'),
+        title: const Text('Course Explorer - Tahap 5 (ChangeNotifier)'),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(28.0),
           child: Container(
@@ -46,102 +80,86 @@ class CourseHomeScreen extends StatelessWidget {
           ),
         ),
       ),
-      body: const Padding(
-        padding: EdgeInsets.all(16.0),
-        child: CourseValueNotifierWidget(),
-      ),
-    );
-  }
-}
-
-// Widget yang menerapkan ValueNotifier
-class CourseValueNotifierWidget extends StatefulWidget {
-  const CourseValueNotifierWidget({super.key});
-
-  @override
-  State<CourseValueNotifierWidget> createState() => _CourseValueNotifierWidgetState();
-}
-
-class _CourseValueNotifierWidgetState extends State<CourseValueNotifierWidget> {
-  // 1. Membuat ValueNotifier untuk nilai sederhana (jumlah favorit)
-  final ValueNotifier<int> _favoriteCountNotifier = ValueNotifier<int>(0);
-
-  bool _isCourse1Fav = false;
-  bool _isCourse2Fav = false;
-
-  @override
-  void dispose() {
-    _favoriteCountNotifier.dispose(); // Wajib dispose notifier untuk mencegah memory leak
-    super.dispose();
-  }
-
-  void _toggleCourse1() {
-    _isCourse1Fav = !_isCourse1Fav;
-    // Mengubah value notifier, otomatis memicu builder pada ValueListenableBuilder
-    _favoriteCountNotifier.value = (_isCourse1Fav ? 1 : 0) + (_isCourse2Fav ? 1 : 0);
-  }
-
-  void _toggleCourse2() {
-    _isCourse2Fav = !_isCourse2Fav;
-    _favoriteCountNotifier.value = (_isCourse1Fav ? 1 : 0) + (_isCourse2Fav ? 1 : 0);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Daftar Kursus (ValueNotifier):',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            // Menampilkan informasi jumlah favorit secara reaktif dari ChangeNotifier
+            AnimatedBuilder(
+              animation: _courseState,
+              builder: (context, child) {
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Daftar Kursus (ChangeNotifier):',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    Chip(
+                      backgroundColor: Colors.blue.shade50,
+                      label: Text(
+                        'Total Favorit: ${_courseState.favorites.length}',
+                        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
-            // 2. Menampilkan nilai secara reaktif menggunakan ValueListenableBuilder
-            ValueListenableBuilder<int>(
-              valueListenable: _favoriteCountNotifier,
-              builder: (context, value, child) {
-                return Chip(
-                  backgroundColor: Colors.blue.shade50,
-                  label: Text(
-                    'Total Favorit: $value',
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
+            const SizedBox(height: 16),
+            
+            // Course Card 1
+            AnimatedBuilder(
+              animation: _courseState,
+              builder: (context, child) {
+                const courseId = 'c1';
+                final isFav = _courseState.isFavorite(courseId);
+                return Card(
+                  child: ListTile(
+                    title: const Text('Pemrograman Mobile Flutter'),
+                    subtitle: const Text('Menggunakan ChangeNotifier & notifyListeners()'),
+                    trailing: IconButton(
+                      icon: Icon(
+                        isFav ? Icons.favorite : Icons.favorite_border,
+                        color: Colors.red,
+                      ),
+                      onPressed: () {
+                        _courseState.toggleFavorite(courseId);
+                      },
+                    ),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 8),
+
+            // Course Card 2
+            AnimatedBuilder(
+              animation: _courseState,
+              builder: (context, child) {
+                const courseId = 'c2';
+                final isFav = _courseState.isFavorite(courseId);
+                return Card(
+                  child: ListTile(
+                    title: const Text('Arsitektur Perangkat Lunak'),
+                    subtitle: const Text('Pemisahan logika state dari UI'),
+                    trailing: IconButton(
+                      icon: Icon(
+                        isFav ? Icons.favorite : Icons.favorite_border,
+                        color: Colors.red,
+                      ),
+                      onPressed: () {
+                        _courseState.toggleFavorite(courseId);
+                      },
+                    ),
                   ),
                 );
               },
             ),
           ],
         ),
-        const SizedBox(height: 16),
-        Card(
-          child: ListTile(
-            title: const Text('Pemrograman Mobile Flutter'),
-            subtitle: const Text('Menggunakan ValueNotifier & ValueListenableBuilder'),
-            trailing: IconButton(
-              icon: Icon(
-                _isCourse1Fav ? Icons.favorite : Icons.favorite_border,
-                color: Colors.red,
-              ),
-              onPressed: _toggleCourse1,
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Card(
-          child: ListTile(
-            title: const Text('Arsitektur Perangkat Lunak'),
-            subtitle: const Text('Pemisahan reaktifitas state lokal'),
-            trailing: IconButton(
-              icon: Icon(
-                _isCourse2Fav ? Icons.favorite : Icons.favorite_border,
-                color: Colors.red,
-              ),
-              onPressed: _toggleCourse2,
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
