@@ -1,345 +1,58 @@
-import 'dart:convert';
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter/material.dart';
 
-Future<Map<String, dynamic>> loadStudentData() async {
-  final jsonString = await rootBundle.loadString(
-    'assets/data/student_data.json',
-  );
+// Identitas Wajib Sesuai Aturan Praktikum
+const String studentName = 'I Putu Agus Martha Jaya';
+const String studentId = '2415051097'; // Ganti dengan NIM Anda jika diperlukan
 
-  return jsonDecode(jsonString) as Map<String, dynamic>;
+void main() {
+  runApp(const CourseExplorerApp());
 }
 
-// Reusable Widget 1: Summary Card
-Widget buildSummaryCard(
-  String value,
-  String label,
-  IconData icon,
-) {
-  return Expanded(
-    child: Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Icon(
-              icon,
-              size: 30,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(label),
-          ],
-        ),
-      ),
-    ),
-  );
-}
-
-// Reusable Widget 2: Course Card
-Widget buildCourseCard(Map<String, dynamic> course) {
-  final String status = course['status'] as String;
-
-  IconData statusIcon;
-  String statusText;
-
-  if (status == 'done') {
-    statusIcon = Icons.check_circle;
-    statusText = 'Selesai';
-  } else if (status == 'active') {
-    statusIcon = Icons.play_circle;
-    statusText = 'Aktif';
-  } else {
-    statusIcon = Icons.schedule;
-    statusText = 'Direncanakan';
-  }
-
-  return Card(
-    margin: const EdgeInsets.symmetric(
-      horizontal: 12,
-      vertical: 6,
-    ),
-    child: ListTile(
-      leading: Icon(
-        statusIcon,
-        size: 32,
-      ),
-      title: Text(
-        course['title'] as String,
-        style: const TextStyle(
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      subtitle: Text(
-        '${course['code']} • ${course['credits']} SKS',
-      ),
-      trailing: Text(
-        statusText,
-        style: const TextStyle(
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    ),
-  );
-}
-
-// Tahap 14 dan 15: Learning Dashboard + Debugging
-class DashboardPage extends StatefulWidget {
-  const DashboardPage({super.key});
+class CourseExplorerApp extends StatelessWidget {
+  const CourseExplorerApp({super.key});
 
   @override
-  State<DashboardPage> createState() => _DashboardPageState();
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Course Explorer v1',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: const CourseHomeScreen(),
+    );
+  }
 }
 
-class _DashboardPageState extends State<DashboardPage> {
-  late Future<Map<String, dynamic>> studentFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    studentFuture = loadStudentData();
-  }
+class CourseHomeScreen extends StatelessWidget {
+  const CourseHomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Learning Dashboard'),
-      ),
-      body: FutureBuilder<Map<String, dynamic>>(
-        future: studentFuture,
-        builder: (context, snapshot) {
-          // Loading
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
-
-          // Error
-          if (snapshot.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      size: 60,
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Gagal memuat data',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      '${snapshot.error}',
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
+        backgroundColor: Colors.blue, 
+        title: const Text('Course Explorer - Tahap 0'),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(28.0),
+          child: Container(
+            alignment: Alignment.centerLeft,
+            padding: const EdgeInsets.only(left: 16.0, bottom: 8.0),
+            child: const Text(
+              '$studentName - $studentId',
+              style: TextStyle(
+                color: Colors.white, 
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
               ),
-            );
-          }
-
-          // Data berhasil
-          final data = snapshot.data!;
-
-          final student =
-              data['student'] as Map<String, dynamic>;
-
-          final courses =
-              data['courses'] as List<dynamic>;
-
-          // Menghitung jumlah mata kuliah
-          final int totalCourses = courses.length;
-
-          // Menghitung total SKS
-          final int totalCredits = courses.fold(
-            0,
-            (sum, item) =>
-                sum + (item['credits'] as int),
-          );
-
-          return ListView(
-            padding: const EdgeInsets.only(
-              top: 12,
-              bottom: 20,
             ),
-            children: [
-              // =========================
-              // PROFILE
-              // =========================
-              Card(
-                margin: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      const CircleAvatar(
-                        radius: 40,
-                        backgroundImage: AssetImage(
-                          'assets/images/profile.jpg',
-                        ),
-                      ),
-
-                      const SizedBox(width: 16),
-
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              student['name'] as String,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-
-                            const SizedBox(height: 4),
-
-                            Text(
-                              student['nim'] as String,
-                            ),
-
-                            const SizedBox(height: 4),
-
-                            Text(
-                              student['program'] as String,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              Card(
-                margin: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Kasus A - Layout Aman',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-
-                      const SizedBox(height: 10),
-
-                      Row(
-                        crossAxisAlignment:
-                            CrossAxisAlignment.start,
-                        children: [
-                          const Icon(Icons.info),
-                          const SizedBox(width: 8),
-
-                          Expanded(
-                            child: Text(
-                              '2415051097 - I Putu Agus Martha Jaya - Ini adalah teks yang sangat panjang untuk menguji layout dan mencegah RenderFlex overflow',
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              // =========================
-              // SUMMARY
-              // =========================
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                ),
-                child: Row(
-                  children: [
-                    buildSummaryCard(
-                      '$totalCourses',
-                      'Mata Kuliah',
-                      Icons.menu_book,
-                    ),
-
-                    const SizedBox(width: 8),
-
-                    buildSummaryCard(
-                      '$totalCredits',
-                      'Total SKS',
-                      Icons.school,
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // =========================
-              // JUDUL COURSE
-              // =========================
-              const Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 12,
-                ),
-                child: Text(
-                  'Daftar Mata Kuliah',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 8),
-
-              // =========================
-              // LIST COURSE
-              // =========================
-              ...courses.map(
-                (course) => buildCourseCard(
-                  course as Map<String, dynamic>,
-                ),
-              ),
-            ],
-          );
-        },
+          ),
+        ),
+      ),
+      body: const Center(
+        child: Text(
+          'Project siap untuk masuk ke tahap State Management!',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 16),
+        ),
       ),
     );
   }
-}
-
-void main() {
-  runApp(
-    const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: DashboardPage(),
-    ),
-  );
 }
