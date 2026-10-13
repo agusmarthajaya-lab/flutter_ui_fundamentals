@@ -14,14 +14,14 @@ class CourseExplorerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Course Explorer v1 - Tahap 2',
+      title: 'Course Explorer v1 - Tahap 3',
       theme: ThemeData(primarySwatch: Colors.blue),
       home: const CourseHomeScreen(),
     );
   }
 }
 
-// PARENT WIDGET: Menyimpan Shared State (favorites count / status)
+// PARENT WIDGET: Memiliki Single Source of Truth untuk state
 class CourseHomeScreen extends StatefulWidget {
   const CourseHomeScreen({super.key});
 
@@ -30,7 +30,7 @@ class CourseHomeScreen extends StatefulWidget {
 }
 
 class _CourseHomeScreenState extends State<CourseHomeScreen> {
-  // Shared state yang akan di-drill ke child widgets
+  // Single source of truth untuk status favorit pada course
   bool _isCourse1Favorite = false;
   bool _isCourse2Favorite = false;
 
@@ -41,7 +41,7 @@ class _CourseHomeScreenState extends State<CourseHomeScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blue,
-        title: Text('Course Explorer - Tahap 2 (Fav: $totalFavorites)'),
+        title: Text('Course Explorer - Tahap 3 (Total Fav: $totalFavorites)'),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(28.0),
           child: Container(
@@ -64,30 +64,30 @@ class _CourseHomeScreenState extends State<CourseHomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Simulasi Prop Drilling dengan setState():',
+              'Penerapan Lifting State Up & Single Source of Truth:',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             
-            // CHILD WIDGET 1: Menerima prop dan callback
-            CourseCard(
-              courseTitle: 'Pemrograman Mobile Flutter',
+            // Mengirim data dan callback ke Child Widget 1
+            CourseCardItem(
+              title: 'Pemrograman Mobile Flutter',
               isFavorite: _isCourse1Favorite,
-              onFavoriteChanged: (val) {
+              onFavoriteChanged: () {
                 setState(() {
-                  _isCourse1Favorite = val;
+                  _isCourse1Favorite = !_isCourse1Favorite;
                 });
               },
             ),
             const SizedBox(height: 12),
 
-            // CHILD WIDGET 2: Menerima prop dan callback
-            CourseCard(
-              courseTitle: 'Arsitektur Perangkat Lunak',
+            // Mengirim data dan callback ke Child Widget 2
+            CourseCardItem(
+              title: 'Arsitektur Perangkat Lunak',
               isFavorite: _isCourse2Favorite,
-              onFavoriteChanged: (val) {
+              onFavoriteChanged: () {
                 setState(() {
-                  _isCourse2Favorite = val;
+                  _isCourse2Favorite = !_isCourse2Favorite;
                 });
               },
             ),
@@ -98,15 +98,15 @@ class _CourseHomeScreenState extends State<CourseHomeScreen> {
   }
 }
 
-// CHILD WIDGET (harus menerima data lewat constructor / prop drilling)
-class CourseCard extends StatelessWidget {
-  final String courseTitle;
+// CHILD WIDGET: Bersifat Stateless, menerima data dan memicu callback
+class CourseCardItem extends StatelessWidget {
+  final String title;
   final bool isFavorite;
-  final ValueChanged<bool> onFavoriteChanged;
+  final VoidCallback onFavoriteChanged;
 
-  const CourseCard({
+  const CourseCardItem({
     super.key,
-    required this.courseTitle,
+    required this.title,
     required this.isFavorite,
     required this.onFavoriteChanged,
   });
@@ -116,14 +116,14 @@ class CourseCard extends StatelessWidget {
     return Card(
       elevation: 2,
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(12.0),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Expanded(
               child: Text(
-                courseTitle,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                title,
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
               ),
             ),
             IconButton(
@@ -131,10 +131,7 @@ class CourseCard extends StatelessWidget {
                 isFavorite ? Icons.favorite : Icons.favorite_border,
                 color: Colors.red,
               ),
-              onPressed: () {
-                // Memanggil callback ke parent untuk mengubah state
-                onFavoriteChanged(!isFavorite);
-              },
+              onPressed: onFavoriteChanged, // Memicu callback ke parent
             ),
           ],
         ),
