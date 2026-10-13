@@ -37,7 +37,7 @@ class Course {
 // ==========================================
 class CourseService {
   Future<List<Course>> loadCourses() async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds: 500));
     
     final String jsonString = '''
     {
@@ -68,7 +68,7 @@ class CourseService {
 }
 
 // ==========================================
-// 3. CLASS COURSE REPOSITORY (Tahap 10)
+// 3. CLASS COURSE REPOSITORY
 // ==========================================
 class CourseRepository {
   final CourseService service;
@@ -81,35 +81,33 @@ class CourseRepository {
 }
 
 // ==========================================
-// 4. COURSE PROVIDER MENGGUNAKAN REPOSITORY
+// 4. CLASS COURSE PROVIDER (Tahap 11 - Async State)
 // ==========================================
-class CourseState extends ChangeNotifier {
-  // Menerima repository untuk mengambil data
+class CourseProvider extends ChangeNotifier {
   final CourseRepository repository;
-  
-  CourseState(this.repository);
 
-  List<Course> _courses = [];
-  bool _isLoading = false;
+  CourseProvider(this.repository);
 
-  List<Course> get courses => _courses;
-  bool get isLoading => _isLoading;
+  List<Course> courses = [];
+  bool isLoading = false;
+  String? error;
 
   final Set<String> _favorites = {};
   Set<String> get favorites => _favorites;
 
-  Future<void> fetchCourses() async {
-    _isLoading = true;
+  Future<void> loadCourses() async {
+    isLoading = true;
+    error = null;
     notifyListeners();
 
     try {
-      _courses = await repository.getCourses();
+      courses = await repository.getCourses();
     } catch (e) {
-      _courses = [];
+      error = e.toString();
+    } finally {
+      isLoading = false;
+      notifyListeners();
     }
-
-    _isLoading = false;
-    notifyListeners();
   }
 
   bool isFavorite(String code) {
@@ -134,9 +132,10 @@ void main() {
         ProxyProvider<CourseService, CourseRepository>(
           update: (_, service, __) => CourseRepository(service),
         ),
-        ChangeNotifierProxyProvider<CourseRepository, CourseState>(
-          create: (context) => CourseState(context.read<CourseRepository>()),
-          update: (_, repository, previousState) => previousState ?? CourseState(repository),
+        ChangeNotifierProxyProvider<CourseRepository, CourseProvider>(
+          create: (context) => CourseProvider(context.read<CourseRepository>())..loadCourses(),
+          update: (_, repository, previousProvider) => 
+              previousProvider ?? CourseProvider(repository),
         ),
       ],
       child: const CourseExplorerApp(),
@@ -150,34 +149,22 @@ class CourseExplorerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Course Explorer v1 - Tahap 10',
+      title: 'Course Explorer v1 - Tahap 11',
       theme: ThemeData(primarySwatch: Colors.blue),
       home: const CourseHomeScreen(),
     );
   }
 }
 
-class CourseHomeScreen extends StatefulWidget {
+class CourseHomeScreen extends StatelessWidget {
   const CourseHomeScreen({super.key});
-
-  @override
-  State<CourseHomeScreen> createState() => _CourseHomeScreenState();
-}
-
-class _CourseHomeScreenState extends State<CourseHomeScreen> {
-  @override
-  void initState() {
-    super.initState();
-    // Memanggil fetchCourses saat screen pertama kali dimuat
-    Future.microtask(() => context.read<CourseState>().fetchCourses());
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blue,
-        title: const Text('Course Explorer - Tahap 10 (Repository Pattern)'),
+        title: const Text('Course Explorer - Tahap 11 (Async State)'),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(28.0),
           child: Container(
@@ -203,12 +190,12 @@ class _CourseHomeScreenState extends State<CourseHomeScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'Daftar Kursus (via Repository):',
+                  'Daftar Kursus (Async State Handling):',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 Builder(
                   builder: (innerContext) {
-                    final totalFav = innerContext.watch<CourseState>().favorites.length;
+                    final totalFav = innerContext.watch<CourseProvider>().favorites.length;
                     return Chip(
                       backgroundColor: Colors.blue.shade50,
                       label: Text(
@@ -223,22 +210,36 @@ class _CourseHomeScreenState extends State<CourseHomeScreen> {
             const SizedBox(height: 16),
             
             Expanded(
-              child: Consumer<CourseState>(
-                builder: (context, courseState, child) {
-                  if (courseState.isLoading) {
+              child: Consumer<CourseProvider>(
+                builder: (context, provider, child) {
+                  // 1. Kondisi Loading
+                  if (provider.isLoading) {
                     return const Center(child: CircularProgressIndicator());
                   }
 
-                  final courseList = courseState.courses;
+                  // 2. Kondisi Error
+                  if (provider.error != null) {
+                    return Center(
+                      child: Text(
+                        'Terjadi Kesalahan: ${provider.error}',
+                        style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                      ),
+                    );
+                  }
+
+                  final courseList = provider.courses;
+                  
+                  // 3. Kondisi Kosong
                   if (courseList.isEmpty) {
                     return const Center(child: Text('Tidak ada data kursus.'));
                   }
                   
+                  // 4. Kondisi Sukses Menampilkan List
                   return ListView.builder(
                     itemCount: courseList.length,
                     itemBuilder: (context, index) {
                       final Course course = courseList[index];
-                      final isFav = courseState.isFavorite(course.code);
+                      final isFav = provider.isFavorite(course.code);
 
                       return Card(
                         margin: const EdgeInsets.only(bottom: 8.0),
@@ -251,7 +252,7 @@ class _CourseHomeScreenState extends State<CourseHomeScreen> {
                               color: Colors.red,
                             ),
                             onPressed: () {
-                              context.read<CourseState>().toggleFavorite(course.code);
+                              provider.toggleFavorite(course.code);
                             },
                           ),
                         ),
