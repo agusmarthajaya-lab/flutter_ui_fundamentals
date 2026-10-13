@@ -33,13 +33,11 @@ class Course {
 }
 
 // ==========================================
-// 2. CLASS COURSE SERVICE (Tahap 9)
+// 2. CLASS COURSE SERVICE
 // ==========================================
 class CourseService {
-  // Mensimulasikan pengambilan data dari sumber luar / asset JSON
   Future<List<Course>> loadCourses() async {
-    // Simulasi data JSON string
-    await Future.delayed(const Duration(milliseconds: 300)); // Simulasi network/io delay
+    await Future.delayed(const Duration(milliseconds: 300));
     
     final String jsonString = '''
     {
@@ -70,10 +68,27 @@ class CourseService {
 }
 
 // ==========================================
-// 3. COURSE PROVIDER MENGGUNAKAN SERVICE
+// 3. CLASS COURSE REPOSITORY (Tahap 10)
+// ==========================================
+class CourseRepository {
+  final CourseService service;
+
+  CourseRepository(this.service);
+
+  Future<List<Course>> getCourses() {
+    return service.loadCourses();
+  }
+}
+
+// ==========================================
+// 4. COURSE PROVIDER MENGGUNAKAN REPOSITORY
 // ==========================================
 class CourseState extends ChangeNotifier {
-  final CourseService _courseService = CourseService();
+  // Menerima repository untuk mengambil data
+  final CourseRepository repository;
+  
+  CourseState(this.repository);
+
   List<Course> _courses = [];
   bool _isLoading = false;
 
@@ -83,13 +98,12 @@ class CourseState extends ChangeNotifier {
   final Set<String> _favorites = {};
   Set<String> get favorites => _favorites;
 
-  // Memuat data menggunakan Service
   Future<void> fetchCourses() async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      _courses = await _courseService.loadCourses();
+      _courses = await repository.getCourses();
     } catch (e) {
       _courses = [];
     }
@@ -114,8 +128,17 @@ class CourseState extends ChangeNotifier {
 
 void main() {
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => CourseState()..fetchCourses(), // Memanggil data saat provider dibuat
+    MultiProvider(
+      providers: [
+        Provider<CourseService>(create: (_) => CourseService()),
+        ProxyProvider<CourseService, CourseRepository>(
+          update: (_, service, __) => CourseRepository(service),
+        ),
+        ChangeNotifierProxyProvider<CourseRepository, CourseState>(
+          create: (context) => CourseState(context.read<CourseRepository>()),
+          update: (_, repository, previousState) => previousState ?? CourseState(repository),
+        ),
+      ],
       child: const CourseExplorerApp(),
     ),
   );
@@ -127,22 +150,34 @@ class CourseExplorerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Course Explorer v1 - Tahap 9',
+      title: 'Course Explorer v1 - Tahap 10',
       theme: ThemeData(primarySwatch: Colors.blue),
       home: const CourseHomeScreen(),
     );
   }
 }
 
-class CourseHomeScreen extends StatelessWidget {
+class CourseHomeScreen extends StatefulWidget {
   const CourseHomeScreen({super.key});
+
+  @override
+  State<CourseHomeScreen> createState() => _CourseHomeScreenState();
+}
+
+class _CourseHomeScreenState extends State<CourseHomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Memanggil fetchCourses saat screen pertama kali dimuat
+    Future.microtask(() => context.read<CourseState>().fetchCourses());
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blue,
-        title: const Text('Course Explorer - Tahap 9 (Service / Data Source)'),
+        title: const Text('Course Explorer - Tahap 10 (Repository Pattern)'),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(28.0),
           child: Container(
@@ -168,7 +203,7 @@ class CourseHomeScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'Daftar Kursus (via CourseService):',
+                  'Daftar Kursus (via Repository):',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 Builder(
@@ -187,7 +222,6 @@ class CourseHomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             
-            // Menampilkan daftar course berdasarkan hasil fetch dari CourseService
             Expanded(
               child: Consumer<CourseState>(
                 builder: (context, courseState, child) {
