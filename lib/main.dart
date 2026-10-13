@@ -31,7 +31,8 @@ class CourseExplorerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Course Explorer v1 - Tahap 12',
+      debugShowCheckedModeBanner: false, // Menghilangkan pita merah "DEBUG"
+      title: 'Course Explorer v1 - Tahap 13',
       theme: ThemeData(primarySwatch: Colors.blue),
       home: const CourseHomeScreen(),
     );

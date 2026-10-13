@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/course.dart';
 import '../providers/course_provider.dart';
+import 'course_detail_screen.dart';
+import 'favorites_screen.dart';
 
 const String studentName = 'I Putu Agus Martha Jaya';
 const String studentId = '2415051097';
@@ -14,7 +16,24 @@ class CourseHomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blue,
-        title: const Text('Course Explorer - Tahap 12 (Refactor Folder)'),
+        title: const Text(
+          'Course Explorer - Tahap 13 (Shared Favorites)',
+          style: TextStyle(color: Colors.white),
+        ),
+        actions: [
+          // Tombol Ikon Hati ke Halaman Favorit
+          IconButton(
+            icon: const Icon(Icons.favorite, color: Colors.white),
+            tooltip: 'Halaman Favorit',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const FavoritesScreen()),
+              );
+            },
+          ),
+          const SizedBox(width: 16), // Memberikan jarak dari tepi kanan
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(28.0),
           child: Container(
@@ -40,7 +59,7 @@ class CourseHomeScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'Daftar Kursus (Modular Folder):',
+                  'Daftar Kursus (Lintas Screen):',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 Builder(
@@ -100,6 +119,14 @@ class CourseHomeScreen extends StatelessWidget {
                               provider.toggleFavorite(course.code);
                             },
                           ),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => CourseDetailScreen(course: course),
+                              ),
+                            );
+                          },
                         ),
                       );
                     },
