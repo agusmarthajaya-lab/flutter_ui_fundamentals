@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 const String studentName = 'I Putu Agus Martha Jaya';
 const String studentId = '2415051097';
 
-// 1. CLASS CHANGENOTIFIER (Digabung dalam satu file agar bebas dari error import)
+// 1. CLASS CHANGENOTIFIER UNTUK STATE MANAGEMENT
 class CourseState extends ChangeNotifier {
   final Set<String> _favorites = {};
 
@@ -34,7 +34,7 @@ class CourseExplorerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Course Explorer v1 - Tahap 5',
+      title: 'Course Explorer v1 - Tahap 6',
       theme: ThemeData(primarySwatch: Colors.blue),
       home: const CourseHomeScreen(),
     );
@@ -49,7 +49,7 @@ class CourseHomeScreen extends StatefulWidget {
 }
 
 class _CourseHomeScreenState extends State<CourseHomeScreen> {
-  // Inisialisasi object ChangeNotifier
+  // Inisialisasi object CourseState
   final CourseState _courseState = CourseState();
 
   @override
@@ -63,7 +63,7 @@ class _CourseHomeScreenState extends State<CourseHomeScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blue,
-        title: const Text('Course Explorer - Tahap 5 (ChangeNotifier)'),
+        title: const Text('Course Explorer - Tahap 6 (Provider Setup)'),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(28.0),
           child: Container(
@@ -85,7 +85,7 @@ class _CourseHomeScreenState extends State<CourseHomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Menampilkan informasi jumlah favorit secara reaktif dari ChangeNotifier
+            // Menggunakan AnimatedBuilder untuk mendengarkan perubahan dari _courseState
             AnimatedBuilder(
               animation: _courseState,
               builder: (context, child) {
@@ -93,7 +93,7 @@ class _CourseHomeScreenState extends State<CourseHomeScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      'Daftar Kursus (ChangeNotifier):',
+                      'Daftar Kursus (Provider Setup):',
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     Chip(
@@ -118,7 +118,7 @@ class _CourseHomeScreenState extends State<CourseHomeScreen> {
                 return Card(
                   child: ListTile(
                     title: const Text('Pemrograman Mobile Flutter'),
-                    subtitle: const Text('Menggunakan ChangeNotifier & notifyListeners()'),
+                    subtitle: const Text('Manajemen state terstruktur & reaktif'),
                     trailing: IconButton(
                       icon: Icon(
                         isFav ? Icons.favorite : Icons.favorite_border,
