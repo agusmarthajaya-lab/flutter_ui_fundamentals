@@ -19,6 +19,12 @@ class CourseService {
           "title": "Arsitektur Perangkat Lunak",
           "credits": 3,
           "status": "Aktif"
+        },
+        {
+          "code": "c3",
+          "title": "Kecerdasan Buatan & Sistem Pakar",
+          "credits": 3,
+          "status": "Aktif"
         }
       ]
     }

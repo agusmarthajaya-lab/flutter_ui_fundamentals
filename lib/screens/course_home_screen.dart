@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/course.dart';
 import '../providers/course_provider.dart';
+import '../widgets/course_card.dart';
 import 'course_detail_screen.dart';
 import 'favorites_screen.dart';
 
+// POINT 5: VARIABEL NAMA DAN NIM MAHASISWA (TERLIHAT DI KODE EDITOR)
 const String studentName = 'I Putu Agus Martha Jaya';
 const String studentId = '2415051097';
 
@@ -13,15 +15,17 @@ class CourseHomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isWideScreen = screenWidth > 600;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blue,
         title: const Text(
-          'Course Explorer - Tahap 13 (Shared Favorites)',
+          'Course Explorer v2 - Integrasi',
           style: TextStyle(color: Colors.white),
         ),
         actions: [
-          // Tombol Ikon Hati ke Halaman Favorit
           IconButton(
             icon: const Icon(Icons.favorite, color: Colors.white),
             tooltip: 'Halaman Favorit',
@@ -32,13 +36,14 @@ class CourseHomeScreen extends StatelessWidget {
               );
             },
           ),
-          const SizedBox(width: 16), // Memberikan jarak dari tepi kanan
+          const SizedBox(width: 16),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(28.0),
           child: Container(
             alignment: Alignment.centerLeft,
             padding: const EdgeInsets.only(left: 16.0, bottom: 8.0),
+            // POINT 5: NAMA DAN NIM MAHASISWA TAMPIL DI APPBAR BROWSER
             child: const Text(
               '$studentName - $studentId',
               style: TextStyle(
@@ -58,9 +63,9 @@ class CourseHomeScreen extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Daftar Kursus (Lintas Screen):',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                Text(
+                  'Daftar Kursus (${isWideScreen ? "Desktop/Tablet View" : "Mobile View"}):',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 Builder(
                   builder: (innerContext) {
@@ -99,26 +104,23 @@ class CourseHomeScreen extends StatelessWidget {
                     return const Center(child: Text('Tidak ada data kursus.'));
                   }
                   
-                  return ListView.builder(
-                    itemCount: courseList.length,
-                    itemBuilder: (context, index) {
-                      final Course course = courseList[index];
-                      final isFav = provider.isFavorite(course.code);
+                  if (isWideScreen) {
+                    return GridView.builder(
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        childAspectRatio: 3.2,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                      ),
+                      itemCount: courseList.length,
+                      itemBuilder: (context, index) {
+                        final Course course = courseList[index];
+                        final isFav = provider.isFavorite(course.code);
 
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 8.0),
-                        child: ListTile(
-                          title: Text(course.title),
-                          subtitle: Text('Kode: ${course.code} | SKS: ${course.credits} | Status: ${course.status}'),
-                          trailing: IconButton(
-                            icon: Icon(
-                              isFav ? Icons.favorite : Icons.favorite_border,
-                              color: Colors.red,
-                            ),
-                            onPressed: () {
-                              provider.toggleFavorite(course.code);
-                            },
-                          ),
+                        return CourseCard(
+                          course: course,
+                          isFavorite: isFav,
+                          onFavoritePressed: () => provider.toggleFavorite(course.code),
                           onTap: () {
                             Navigator.push(
                               context,
@@ -127,7 +129,29 @@ class CourseHomeScreen extends StatelessWidget {
                               ),
                             );
                           },
-                        ),
+                        );
+                      },
+                    );
+                  }
+
+                  return ListView.builder(
+                    itemCount: courseList.length,
+                    itemBuilder: (context, index) {
+                      final Course course = courseList[index];
+                      final isFav = provider.isFavorite(course.code);
+
+                      return CourseCard(
+                        course: course,
+                        isFavorite: isFav,
+                        onFavoritePressed: () => provider.toggleFavorite(course.code),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => CourseDetailScreen(course: course),
+                            ),
+                          );
+                        },
                       );
                     },
                   );

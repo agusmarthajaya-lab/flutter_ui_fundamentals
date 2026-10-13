@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/course_provider.dart';
+import '../widgets/course_card.dart';
 import 'course_detail_screen.dart';
 
 class FavoritesScreen extends StatelessWidget {
@@ -29,29 +30,24 @@ class FavoritesScreen extends StatelessWidget {
           }
 
           return ListView.builder(
+            padding: const EdgeInsets.all(16.0),
             itemCount: favoriteCourses.length,
             itemBuilder: (context, index) {
               final course = favoriteCourses[index];
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: ListTile(
-                  title: Text(course.title),
-                  subtitle: Text('Kode: ${course.code} | SKS: ${course.credits}'),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.favorite, color: Colors.red),
-                    onPressed: () {
-                      provider.toggleFavorite(course.code);
-                    },
-                  ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => CourseDetailScreen(course: course),
-                      ),
-                    );
-                  },
-                ),
+              return CourseCard(
+                course: course,
+                isFavorite: true,
+                onFavoritePressed: () {
+                  provider.toggleFavorite(course.code);
+                },
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => CourseDetailScreen(course: course),
+                    ),
+                  );
+                },
               );
             },
           );
