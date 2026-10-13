@@ -14,34 +14,22 @@ class CourseExplorerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Course Explorer v1 - Tahap 3',
+      title: 'Course Explorer v1 - Tahap 4',
       theme: ThemeData(primarySwatch: Colors.blue),
       home: const CourseHomeScreen(),
     );
   }
 }
 
-// PARENT WIDGET: Memiliki Single Source of Truth untuk state
-class CourseHomeScreen extends StatefulWidget {
+class CourseHomeScreen extends StatelessWidget {
   const CourseHomeScreen({super.key});
 
   @override
-  State<CourseHomeScreen> createState() => _CourseHomeScreenState();
-}
-
-class _CourseHomeScreenState extends State<CourseHomeScreen> {
-  // Single source of truth untuk status favorit pada course
-  bool _isCourse1Favorite = false;
-  bool _isCourse2Favorite = false;
-
-  @override
   Widget build(BuildContext context) {
-    int totalFavorites = (_isCourse1Favorite ? 1 : 0) + (_isCourse2Favorite ? 1 : 0);
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blue,
-        title: Text('Course Explorer - Tahap 3 (Total Fav: $totalFavorites)'),
+        title: const Text('Course Explorer - Tahap 4 (ValueNotifier)'),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(28.0),
           child: Container(
@@ -58,84 +46,102 @@ class _CourseHomeScreenState extends State<CourseHomeScreen> {
           ),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Penerapan Lifting State Up & Single Source of Truth:',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            
-            // Mengirim data dan callback ke Child Widget 1
-            CourseCardItem(
-              title: 'Pemrograman Mobile Flutter',
-              isFavorite: _isCourse1Favorite,
-              onFavoriteChanged: () {
-                setState(() {
-                  _isCourse1Favorite = !_isCourse1Favorite;
-                });
-              },
-            ),
-            const SizedBox(height: 12),
-
-            // Mengirim data dan callback ke Child Widget 2
-            CourseCardItem(
-              title: 'Arsitektur Perangkat Lunak',
-              isFavorite: _isCourse2Favorite,
-              onFavoriteChanged: () {
-                setState(() {
-                  _isCourse2Favorite = !_isCourse2Favorite;
-                });
-              },
-            ),
-          ],
-        ),
+      body: const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: CourseValueNotifierWidget(),
       ),
     );
   }
 }
 
-// CHILD WIDGET: Bersifat Stateless, menerima data dan memicu callback
-class CourseCardItem extends StatelessWidget {
-  final String title;
-  final bool isFavorite;
-  final VoidCallback onFavoriteChanged;
+// Widget yang menerapkan ValueNotifier
+class CourseValueNotifierWidget extends StatefulWidget {
+  const CourseValueNotifierWidget({super.key});
 
-  const CourseCardItem({
-    super.key,
-    required this.title,
-    required this.isFavorite,
-    required this.onFavoriteChanged,
-  });
+  @override
+  State<CourseValueNotifierWidget> createState() => _CourseValueNotifierWidgetState();
+}
+
+class _CourseValueNotifierWidgetState extends State<CourseValueNotifierWidget> {
+  // 1. Membuat ValueNotifier untuk nilai sederhana (jumlah favorit)
+  final ValueNotifier<int> _favoriteCountNotifier = ValueNotifier<int>(0);
+
+  bool _isCourse1Fav = false;
+  bool _isCourse2Fav = false;
+
+  @override
+  void dispose() {
+    _favoriteCountNotifier.dispose(); // Wajib dispose notifier untuk mencegah memory leak
+    super.dispose();
+  }
+
+  void _toggleCourse1() {
+    _isCourse1Fav = !_isCourse1Fav;
+    // Mengubah value notifier, otomatis memicu builder pada ValueListenableBuilder
+    _favoriteCountNotifier.value = (_isCourse1Fav ? 1 : 0) + (_isCourse2Fav ? 1 : 0);
+  }
+
+  void _toggleCourse2() {
+    _isCourse2Fav = !_isCourse2Fav;
+    _favoriteCountNotifier.value = (_isCourse1Fav ? 1 : 0) + (_isCourse2Fav ? 1 : 0);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Expanded(
-              child: Text(
-                title,
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-              ),
+            const Text(
+              'Daftar Kursus (ValueNotifier):',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            IconButton(
-              icon: Icon(
-                isFavorite ? Icons.favorite : Icons.favorite_border,
-                color: Colors.red,
-              ),
-              onPressed: onFavoriteChanged, // Memicu callback ke parent
+            // 2. Menampilkan nilai secara reaktif menggunakan ValueListenableBuilder
+            ValueListenableBuilder<int>(
+              valueListenable: _favoriteCountNotifier,
+              builder: (context, value, child) {
+                return Chip(
+                  backgroundColor: Colors.blue.shade50,
+                  label: Text(
+                    'Total Favorit: $value',
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
+                  ),
+                );
+              },
             ),
           ],
         ),
-      ),
+        const SizedBox(height: 16),
+        Card(
+          child: ListTile(
+            title: const Text('Pemrograman Mobile Flutter'),
+            subtitle: const Text('Menggunakan ValueNotifier & ValueListenableBuilder'),
+            trailing: IconButton(
+              icon: Icon(
+                _isCourse1Fav ? Icons.favorite : Icons.favorite_border,
+                color: Colors.red,
+              ),
+              onPressed: _toggleCourse1,
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Card(
+          child: ListTile(
+            title: const Text('Arsitektur Perangkat Lunak'),
+            subtitle: const Text('Pemisahan reaktifitas state lokal'),
+            trailing: IconButton(
+              icon: Icon(
+                _isCourse2Fav ? Icons.favorite : Icons.favorite_border,
+                color: Colors.red,
+              ),
+              onPressed: _toggleCourse2,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
