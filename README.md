@@ -13,3 +13,8 @@ Screen/Widget -> Provider -> Repository -> Service/Data Source
 - **providers/**: Mengelola state aplikasi (loading, error, favorites) dan memberi tahu UI jika terjadi perubahan (`notifyListeners`).
 - **widgets/**: Komponen UI reusalbe/terpisah (misal: `CourseCard`).
 - **screens/**: Halaman UI aplikasi yang menampilkan state dari Provider ke pengguna.
+
+## REST API Endpoint
+- **URL:** https://jsonplaceholder.typicode.com/courses
+- **Method:** GET
+- **Fields:** id, code, title, credits, status
