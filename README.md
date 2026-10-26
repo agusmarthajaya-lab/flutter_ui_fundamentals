@@ -18,3 +18,8 @@ Screen/Widget -> Provider -> Repository -> Service/Data Source
 - **URL:** https://jsonplaceholder.typicode.com/courses
 - **Method:** GET
 - **Fields:** id, code, title, credits, status
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.2.0 # atau versi terbaru
