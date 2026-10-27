@@ -1,9 +1,39 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 
-// 1. Buat konstanta apiUrl sesuai endpoint latihan
-const String apiUrl = 'https://jsonplaceholder.typicode.com/posts';
+// 1. Model Course (Sesuai Tahap 3)
+class Course {
+  final int? id;
+  final String code;
+  final String title;
+  final int credits;
+  final String status;
+
+  const Course({
+    this.id,
+    required this.code,
+    required this.title,
+    required this.credits,
+    this.status = 'planned',
+  });
+
+  factory Course.fromJson(Map<String, dynamic> json) {
+    return Course(
+      id: json['id'] as int?,
+      code: json['code'] as String,
+      title: json['title'] as String,
+      credits: json['credits'] as int,
+      status: (json['status'] as String?) ?? 'planned',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'code': code,
+        'title': title,
+        'credits': credits,
+        'status': status,
+      };
+}
 
 void main() {
   runApp(const MyApp());
@@ -14,142 +44,106 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: Tahap2Screen(),
+      title: 'Praktikum Flutter',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: const CourseScreen(),
     );
   }
 }
 
-class Tahap2Screen extends StatefulWidget {
-  const Tahap2Screen({super.key});
-
-  @override
-  State<Tahap2Screen> createState() => _Tahap2ScreenState();
-}
-
-class _Tahap2ScreenState extends State<Tahap2Screen> {
-  // Identitas Mahasiswa
-  final String nama = 'I Putu Agus Martha Jaya';
-  final String nim = '2415051097';
-
-  int itemCount = 0;
-  bool isLoading = true;
-  String errorMessage = '';
-
-  @override
-  void initState() {
-    super.initState();
-    loadCourses();
-  }
-
-  // 2. Panggil GET melalui function asynchronous
-  Future<List<dynamic>> fetchCourses() async {
-    final response = await http.get(Uri.parse(apiUrl));
-
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body) as List<dynamic>;
-    }
-
-    throw Exception('HTTP ${response.statusCode}');
-  }
-
-  void loadCourses() async {
-    try {
-      final data = await fetchCourses();
-      setState(() {
-        itemCount = data.length;
-        isLoading = false;
-      });
-
-      // 3. Tampilkan jumlah item pada debugPrint
-      debugPrint('========================================');
-      debugPrint('Praktikum Tahap 2');
-      debugPrint('Nama : $nama');
-      debugPrint('NIM  : $nim');
-      debugPrint('Jumlah item berhasil dimuat: $itemCount');
-      debugPrint('========================================');
-    } catch (e) {
-      setState(() {
-        errorMessage = e.toString();
-        isLoading = false;
-      });
-      debugPrint('Error: $e');
-    }
-  }
+class CourseScreen extends StatelessWidget {
+  const CourseScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // Simulasi data list course (minimal 3 course) sesuai instruksi Tahap 3
+    final List<Map<String, dynamic>> rawData = [
+      {
+        'id': 1,
+        'code': 'IF-101',
+        'title': 'Pemrograman Mobile',
+        'credits': 3,
+        'status': 'active',
+      },
+      {
+        'id': 2,
+        'code': 'IF-102',
+        'title': 'Pemrograman Web',
+        'credits': 3,
+        'status': 'planned',
+      },
+      {
+        'id': 3,
+        'code': 'IF-103',
+        'title': 'Kecerdasan Buatan',
+        'credits': 4,
+        'status': 'completed',
+      },
+    ];
+
+    // Konversi response list menjadi List<Course> (Poin 4 instruksi)
+    List<Course> courseList = rawData.map((item) => Course.fromJson(item)).toList();
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Praktikum Tahap 2 - HTTP GET'),
-        backgroundColor: Colors.blueAccent,
+        // Judul disesuaikan untuk Tahap 3
+        title: const Text('Praktikum Tahap 3 - Model Course'),
+        backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Tampilan Nama dan NIM pada Editor & UI
-              Card(
-                elevation: 4,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      Text(
-                        'Nama: $nama',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'NIM: $nim',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 30),
-
-              // Status Loading / Error / Hasil Jumlah Item
-              if (isLoading)
-                const CircularProgressIndicator()
-              else if (errorMessage.isNotEmpty)
+      body: Column(
+        children: [
+          // Bagian Identitas Nama & NIM yang wajib terlihat di screenshot
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            color: Colors.blue.shade50,
+            child: const Column(
+              children: [
                 Text(
-                  'Terjadi Kesalahan:\n$errorMessage',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.red, fontSize: 16),
-                )
-              else
-                // 3. Tampilkan jumlah item pada UI
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.green.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.green),
-                  ),
-                  child: Text(
-                    'Jumlah Item: $itemCount',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green,
-                    ),
-                  ),
+                  'Nama: I Putu Agus Martha Jaya',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
-            ],
+                SizedBox(height: 4),
+                Text(
+                  'NIM: 2415051097',
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+              ],
+            ),
           ),
-        ),
+          const Divider(height: 1),
+          // List View untuk menampilkan minimal 3 course (Poin 5 instruksi)
+          Expanded(
+            child: ListView.builder(
+              itemCount: courseList.length,
+              itemBuilder: (context, index) {
+                final course = courseList[index];
+                return Card(
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  elevation: 2,
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      child: Text(course.code.substring(0, 2)),
+                    ),
+                    // Menampilkan title
+                    title: Text(
+                      course.title,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    // Menampilkan code dan status
+                    subtitle: Text('Kode: ${course.code}  |  Status: ${course.status}'),
+                    trailing: Text('${course.credits} SKS'),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
