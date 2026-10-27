@@ -3,7 +3,6 @@
 
 import 'package:flutter/material.dart';
 
-// Model Course
 class Course {
   final int? id;
   final String code;
@@ -36,6 +35,16 @@ class Course {
         'credits': credits,
         'status': status,
       };
+
+  Course copyWith({int? id, String? code, String? title, int? credits, String? status}) {
+    return Course(
+      id: id ?? this.id,
+      code: code ?? this.code,
+      title: title ?? this.title,
+      credits: credits ?? this.credits,
+      status: status ?? this.status,
+    );
+  }
 }
 
 void main() {
@@ -49,14 +58,13 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Praktikum Flutter Tahap 6',
+      title: 'Praktikum Flutter Tahap 7',
       theme: ThemeData(primarySwatch: Colors.blue),
       home: const CourseScreen(),
     );
   }
 }
 
-// Halaman Utama Menampilkan List Course
 class CourseScreen extends StatefulWidget {
   const CourseScreen({super.key});
 
@@ -65,24 +73,22 @@ class CourseScreen extends StatefulWidget {
 }
 
 class _CourseScreenState extends State<CourseScreen> {
-  bool isLoading = false;
   List<Course> courses = [
-    const Course(code: 'IF-101', title: 'Pemrograman Mobile', credits: 3, status: 'active'),
-    const Course(code: 'IF-102', title: 'Pemrograman Web', credits: 3, status: 'planned'),
-    const Course(code: 'IF-103', title: 'Kecerdasan Buatan', credits: 4, status: 'completed'),
+    const Course(id: 1, code: 'IF-101', title: 'Pemrograman Mobile', credits: 3, status: 'active'),
+    const Course(id: 2, code: 'IF-102', title: 'Pemrograman Web', credits: 3, status: 'planned'),
+    const Course(id: 3, code: 'IF-103', title: 'Kecerdasan Buatan', credits: 4, status: 'completed'),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Praktikum Tahap 6 - HTTP POST'),
+        title: const Text('Praktikum Tahap 7 - HTTP PUT/PATCH'),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
       ),
       body: Column(
         children: [
-          // Identitas Nama & NIM
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(12),
@@ -116,8 +122,25 @@ class _CourseScreenState extends State<CourseScreen> {
                       child: Text(course.code.substring(0, 2)),
                     ),
                     title: Text(course.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text('Kode: ${course.code} | Status: ${course.status}'),
-                    trailing: Text('${course.credits} SKS'),
+                    subtitle: Text('Kode: ${course.code} | Status: ${course.status} (${course.credits} SKS)'),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.edit, color: Colors.blue),
+                      onPressed: () async {
+                        // Navigasi ke Edit Form dengan membawa data course yang dipilih
+                        final updatedCourse = await Navigator.push<Course>(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => EditCourseScreen(course: course),
+                          ),
+                        );
+
+                        if (updatedCourse != null) {
+                          setState(() {
+                            courses[index] = updatedCourse;
+                          });
+                        }
+                      },
+                    ),
                   ),
                 );
               },
@@ -125,46 +148,37 @@ class _CourseScreenState extends State<CourseScreen> {
           ),
         ],
       ),
-      // Tombol untuk membuka Form Tambah Course
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AddCourseScreen()),
-          );
-
-          // Jika berhasil disimpan, refresh list
-          if (result == true) {
-            setState(() {
-              // Simulasi menambah course baru ke list lokal
-              courses.add(
-                const Course(code: 'IF-104', title: 'Pemrograman Berorientasi Objek', credits: 3, status: 'active'),
-              );
-            });
-          }
-        },
-        backgroundColor: Colors.blue,
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
     );
   }
 }
 
-// Halaman Form Tambah Course (Tahap 6)
-class AddCourseScreen extends StatefulWidget {
-  const AddCourseScreen({super.key});
+// Halaman Edit Course Screen (Tahap 7)
+class EditCourseScreen extends StatefulWidget {
+  final Course course;
+
+  const EditCourseScreen({super.key, required this.course});
 
   @override
-  State<AddCourseScreen> createState() => _AddCourseScreenState();
+  State<EditCourseScreen> createState() => _EditCourseScreenState();
 }
 
-class _AddCourseScreenState extends State<AddCourseScreen> {
+class _EditCourseScreenState extends State<EditCourseScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _codeController = TextEditingController();
-  final _titleController = TextEditingController();
-  final _creditsController = TextEditingController();
-  String _selectedStatus = 'planned';
+  late TextEditingController _codeController;
+  late TextEditingController _titleController;
+  late TextEditingController _creditsController;
+  late String _selectedStatus;
   bool isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Mengisi form dengan data lama sesuai instruksi Tahap 7
+    _codeController = TextEditingController(text: widget.course.code);
+    _titleController = TextEditingController(text: widget.course.title);
+    _creditsController = TextEditingController(text: widget.course.credits.toString());
+    _selectedStatus = widget.course.status;
+  }
 
   @override
   void dispose() {
@@ -174,7 +188,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
     super.dispose();
   }
 
-  Future<void> _submitData() async {
+  Future<void> _submitUpdate() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
@@ -182,21 +196,26 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
     });
 
     try {
-      // Simulasi proses request POST ke server
+      // Simulasi request PUT ke API
       await Future.delayed(const Duration(seconds: 1));
+
+      final editedCourse = widget.course.copyWith(
+        title: _titleController.text,
+        credits: int.parse(_creditsController.text),
+        status: _selectedStatus,
+      );
 
       if (!mounted) return;
 
-      // Tampilkan SnackBar sukses
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Course berhasil ditambahkan!')),
+        const SnackBar(content: Text('Course berhasil diperbarui!')),
       );
 
-      Navigator.pop(context, true); // Kembali ke halaman utama
+      Navigator.pop(context, editedCourse); // Kembali dan bawa data terupdate
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal menyimpan: $e')),
+        SnackBar(content: Text('Gagal memperbarui: $e')),
       );
     } finally {
       if (mounted) {
@@ -211,7 +230,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tambah Course Baru (Tahap 6)'),
+        title: const Text('Edit Course (Tahap 7)'),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
       ),
@@ -232,10 +251,16 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
                 ),
               ),
               const SizedBox(height: 20),
+              // Field Code dibuat read-only sesuai instruksi
               TextFormField(
                 controller: _codeController,
-                decoration: const InputDecoration(labelText: 'Kode Course (mis: IF-104)', border: OutlineInputBorder()),
-                validator: (value) => value == null || value.isEmpty ? 'Kode wajib diisi' : null,
+                readOnly: true,
+                decoration: const InputDecoration(
+                  labelText: 'Kode Course (Read-only)',
+                  border: OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Colors.black12,
+                ),
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -271,7 +296,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
               ),
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: isSaving ? null : _submitData,
+                onPressed: isSaving ? null : _submitUpdate,
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, foregroundColor: Colors.white),
                 child: isSaving
                     ? const SizedBox(
@@ -279,7 +304,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                       )
-                    : const Text('Simpan Course'),
+                    : const Text('Simpan Perubahan'),
               ),
             ],
           ),
