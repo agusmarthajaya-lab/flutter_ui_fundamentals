@@ -3,7 +3,7 @@
 
 import 'package:flutter/material.dart';
 
-// Model Course (dari Tahap 3)
+// Model Course
 class Course {
   final int? id;
   final String code;
@@ -49,13 +49,14 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Praktikum Flutter',
+      title: 'Praktikum Flutter Tahap 6',
       theme: ThemeData(primarySwatch: Colors.blue),
       home: const CourseScreen(),
     );
   }
 }
 
+// Halaman Utama Menampilkan List Course
 class CourseScreen extends StatefulWidget {
   const CourseScreen({super.key});
 
@@ -65,58 +66,23 @@ class CourseScreen extends StatefulWidget {
 
 class _CourseScreenState extends State<CourseScreen> {
   bool isLoading = false;
-  String? error;
-  List<Course> courses = [];
-
-  @override
-  void initState() {
-    super.initState();
-    loadCourses(); // Dipanggil saat initState, bukan di build()
-  }
-
-  // Fungsi simulasi memuat data (bisa diubah untuk testing Loading, Success, Empty, atau Error)
-  Future<void> loadCourses() async {
-    setState(() {
-      isLoading = true;
-      error = null;
-    });
-
-    try {
-      // Simulasi jeda jaringan
-      await Future.delayed(const Duration(seconds: 1));
-      
-      // Berhasil (Success State) - Berisi data minimal 3 course
-      courses = [
-        const Course(code: 'IF-101', title: 'Pemrograman Mobile', credits: 3, status: 'active'),
-        const Course(code: 'IF-102', title: 'Pemrograman Web', credits: 3, status: 'planned'),
-        const Course(code: 'IF-103', title: 'Kecerdasan Buatan', credits: 4, status: 'completed'),
-      ];
-
-      // CATATAN PENGUJIAN TAHAP 5:
-      // 1. Untuk menguji Empty State, ubah courses menjadi: courses = [];
-      // 2. Untuk menguji Error State, aktifkan baris throw di bawah ini:
-      // throw Exception('Gagal terhubung ke server backend');
-
-    } catch (e) {
-      error = e.toString();
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
+  List<Course> courses = [
+    const Course(code: 'IF-101', title: 'Pemrograman Mobile', credits: 3, status: 'active'),
+    const Course(code: 'IF-102', title: 'Pemrograman Web', credits: 3, status: 'planned'),
+    const Course(code: 'IF-103', title: 'Kecerdasan Buatan', credits: 4, status: 'completed'),
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Praktikum Tahap 5 - State Management'),
+        title: const Text('Praktikum Tahap 6 - HTTP POST'),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
       ),
       body: Column(
         children: [
-          // Identitas Nama & NIM (Wajib terlihat untuk screenshot)
+          // Identitas Nama & NIM
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(12),
@@ -136,101 +102,187 @@ class _CourseScreenState extends State<CourseScreen> {
             ),
           ),
           const Divider(height: 1),
-          // Penanganan State (Loading, Error, Empty, Success)
           Expanded(
-            child: _buildBodyContent(),
+            child: ListView.builder(
+              itemCount: courses.length,
+              itemBuilder: (context, index) {
+                final course = courses[index];
+                return Card(
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      child: Text(course.code.substring(0, 2)),
+                    ),
+                    title: Text(course.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: Text('Kode: ${course.code} | Status: ${course.status}'),
+                    trailing: Text('${course.credits} SKS'),
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ),
-    );
-  }
+      // Tombol untuk membuka Form Tambah Course
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AddCourseScreen()),
+          );
 
-  Widget _buildBodyContent() {
-    // 1. Loading State
-    if (isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    // 2. Error State
-    if (error != null) {
-      return ErrorView(
-        message: error!,
-        onRetry: loadCourses,
-      );
-    }
-
-    // 3. Empty State
-    if (courses.isEmpty) {
-      return const Center(
-        child: Text(
-          'Data course belum tersedia',
-          style: TextStyle(fontSize: 16, color: Colors.grey),
-        ),
-      );
-    }
-
-    // 4. Success State (Tampilkan list data)
-    return ListView.builder(
-      itemCount: courses.length,
-      itemBuilder: (context, index) {
-        final course = courses[index];
-        return Card(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          elevation: 2,
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: Colors.blue,
-              foregroundColor: Colors.white,
-              child: Text(course.code.substring(0, 2)),
-            ),
-            title: Text(course.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text('Kode: ${course.code} | Status: ${course.status}'),
-            trailing: Text('${course.credits} SKS'),
-          ),
-        );
-      },
+          // Jika berhasil disimpan, refresh list
+          if (result == true) {
+            setState(() {
+              // Simulasi menambah course baru ke list lokal
+              courses.add(
+                const Course(code: 'IF-104', title: 'Pemrograman Berorientasi Objek', credits: 3, status: 'active'),
+              );
+            });
+          }
+        },
+        backgroundColor: Colors.blue,
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
     );
   }
 }
 
-// Widget ErrorView sesuai permintaan Tahap 5
-class ErrorView extends StatelessWidget {
-  final String message;
-  final VoidCallback onRetry;
+// Halaman Form Tambah Course (Tahap 6)
+class AddCourseScreen extends StatefulWidget {
+  const AddCourseScreen({super.key});
 
-  const ErrorView({
-    super.key,
-    required this.message,
-    required this.onRetry,
-  });
+  @override
+  State<AddCourseScreen> createState() => _AddCourseScreenState();
+}
+
+class _AddCourseScreenState extends State<AddCourseScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _codeController = TextEditingController();
+  final _titleController = TextEditingController();
+  final _creditsController = TextEditingController();
+  String _selectedStatus = 'planned';
+  bool isSaving = false;
+
+  @override
+  void dispose() {
+    _codeController.dispose();
+    _titleController.dispose();
+    _creditsController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submitData() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      isSaving = true;
+    });
+
+    try {
+      // Simulasi proses request POST ke server
+      await Future.delayed(const Duration(seconds: 1));
+
+      if (!mounted) return;
+
+      // Tampilkan SnackBar sukses
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Course berhasil ditambahkan!')),
+      );
+
+      Navigator.pop(context, true); // Kembali ke halaman utama
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal menyimpan: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          isSaving = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Tambah Course Baru (Tahap 6)'),
+        backgroundColor: Colors.blue,
+        foregroundColor: Colors.white,
+      ),
+      body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 60, color: Colors.red),
-            const SizedBox(height: 12),
-            Text(
-              'Terjadi Kesalahan',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.red.shade700),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 14, color: Colors.grey),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
-            ),
-          ],
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                color: Colors.blue.shade50,
+                child: const Column(
+                  children: [
+                    Text('Nama: I Putu Agus Martha Jaya', style: TextStyle(fontWeight: FontWeight.bold)),
+                    Text('NIM: 2415051097', style: TextStyle(color: Colors.grey)),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              TextFormField(
+                controller: _codeController,
+                decoration: const InputDecoration(labelText: 'Kode Course (mis: IF-104)', border: OutlineInputBorder()),
+                validator: (value) => value == null || value.isEmpty ? 'Kode wajib diisi' : null,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _titleController,
+                decoration: const InputDecoration(labelText: 'Judul Mata Kuliah', border: OutlineInputBorder()),
+                validator: (value) => value == null || value.isEmpty ? 'Judul wajib diisi' : null,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _creditsController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Jumlah SKS (Credits)', border: OutlineInputBorder()),
+                validator: (value) {
+                  if (value == null || value.isEmpty) return 'Credits wajib diisi';
+                  if (int.tryParse(value) == null) return 'Credits harus berupa angka';
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: _selectedStatus,
+                decoration: const InputDecoration(labelText: 'Status', border: OutlineInputBorder()),
+                items: const [
+                  DropdownMenuItem(value: 'planned', child: Text('Planned')),
+                  DropdownMenuItem(value: 'active', child: Text('Active')),
+                  DropdownMenuItem(value: 'completed', child: Text('Completed')),
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    _selectedStatus = value!;
+                  });
+                },
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: isSaving ? null : _submitData,
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, foregroundColor: Colors.white),
+                child: isSaving
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Text('Simpan Course'),
+              ),
+            ],
+          ),
         ),
       ),
     );
