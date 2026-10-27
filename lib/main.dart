@@ -35,16 +35,6 @@ class Course {
         'credits': credits,
         'status': status,
       };
-
-  Course copyWith({int? id, String? code, String? title, int? credits, String? status}) {
-    return Course(
-      id: id ?? this.id,
-      code: code ?? this.code,
-      title: title ?? this.title,
-      credits: credits ?? this.credits,
-      status: status ?? this.status,
-    );
-  }
 }
 
 void main() {
@@ -58,7 +48,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Praktikum Flutter Tahap 7',
+      title: 'Praktikum Flutter Tahap 8',
       theme: ThemeData(primarySwatch: Colors.blue),
       home: const CourseScreen(),
     );
@@ -79,11 +69,55 @@ class _CourseScreenState extends State<CourseScreen> {
     const Course(id: 3, code: 'IF-103', title: 'Kecerdasan Buatan', credits: 4, status: 'completed'),
   ];
 
+  // Fungsi untuk menghapus course dengan konfirmasi Dialog
+  Future<void> _confirmAndDelete(Course course) async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Konfirmasi Hapus'),
+        content: Text('Apakah Anda yakin ingin menghapus course "${course.title}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldDelete != true) return;
+
+    try {
+      // Simulasi request DELETE ke API
+      await Future.delayed(const Duration(seconds: 1));
+
+      if (!mounted) return;
+
+      setState(() {
+        courses.removeWhere((item) => item.id == course.id);
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Course "${course.title}" berhasil dihapus!')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal menghapus course: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Praktikum Tahap 7 - HTTP PUT/PATCH'),
+        title: const Text('Praktikum Tahap 8 - HTTP DELETE'),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
       ),
@@ -109,206 +143,38 @@ class _CourseScreenState extends State<CourseScreen> {
           ),
           const Divider(height: 1),
           Expanded(
-            child: ListView.builder(
-              itemCount: courses.length,
-              itemBuilder: (context, index) {
-                final course = courses[index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
-                      child: Text(course.code.substring(0, 2)),
+            child: courses.isEmpty
+                ? const Center(
+                    child: Text(
+                      'Data course belum tersedia',
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
                     ),
-                    title: Text(course.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text('Kode: ${course.code} | Status: ${course.status} (${course.credits} SKS)'),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.edit, color: Colors.blue),
-                      onPressed: () async {
-                        // Navigasi ke Edit Form dengan membawa data course yang dipilih
-                        final updatedCourse = await Navigator.push<Course>(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => EditCourseScreen(course: course),
+                  )
+                : ListView.builder(
+                    itemCount: courses.length,
+                    itemBuilder: (context, index) {
+                      final course = courses[index];
+                      return Card(
+                        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: Colors.blue,
+                            foregroundColor: Colors.white,
+                            child: Text(course.code.substring(0, 2)),
                           ),
-                        );
-
-                        if (updatedCourse != null) {
-                          setState(() {
-                            courses[index] = updatedCourse;
-                          });
-                        }
-                      },
-                    ),
+                          title: Text(course.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                          subtitle: Text('Kode: ${course.code} | Status: ${course.status} (${course.credits} SKS)'),
+                          // Tombol Delete / Hapus
+                          trailing: IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () => _confirmAndDelete(course),
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// Halaman Edit Course Screen (Tahap 7)
-class EditCourseScreen extends StatefulWidget {
-  final Course course;
-
-  const EditCourseScreen({super.key, required this.course});
-
-  @override
-  State<EditCourseScreen> createState() => _EditCourseScreenState();
-}
-
-class _EditCourseScreenState extends State<EditCourseScreen> {
-  final _formKey = GlobalKey<FormState>();
-  late TextEditingController _codeController;
-  late TextEditingController _titleController;
-  late TextEditingController _creditsController;
-  late String _selectedStatus;
-  bool isSaving = false;
-
-  @override
-  void initState() {
-    super.initState();
-    // Mengisi form dengan data lama sesuai instruksi Tahap 7
-    _codeController = TextEditingController(text: widget.course.code);
-    _titleController = TextEditingController(text: widget.course.title);
-    _creditsController = TextEditingController(text: widget.course.credits.toString());
-    _selectedStatus = widget.course.status;
-  }
-
-  @override
-  void dispose() {
-    _codeController.dispose();
-    _titleController.dispose();
-    _creditsController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _submitUpdate() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() {
-      isSaving = true;
-    });
-
-    try {
-      // Simulasi request PUT ke API
-      await Future.delayed(const Duration(seconds: 1));
-
-      final editedCourse = widget.course.copyWith(
-        title: _titleController.text,
-        credits: int.parse(_creditsController.text),
-        status: _selectedStatus,
-      );
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Course berhasil diperbarui!')),
-      );
-
-      Navigator.pop(context, editedCourse); // Kembali dan bawa data terupdate
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal memperbarui: $e')),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          isSaving = false;
-        });
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Edit Course (Tahap 7)'),
-        backgroundColor: Colors.blue,
-        foregroundColor: Colors.white,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                color: Colors.blue.shade50,
-                child: const Column(
-                  children: [
-                    Text('Nama: I Putu Agus Martha Jaya', style: TextStyle(fontWeight: FontWeight.bold)),
-                    Text('NIM: 2415051097', style: TextStyle(color: Colors.grey)),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              // Field Code dibuat read-only sesuai instruksi
-              TextFormField(
-                controller: _codeController,
-                readOnly: true,
-                decoration: const InputDecoration(
-                  labelText: 'Kode Course (Read-only)',
-                  border: OutlineInputBorder(),
-                  filled: true,
-                  fillColor: Colors.black12,
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _titleController,
-                decoration: const InputDecoration(labelText: 'Judul Mata Kuliah', border: OutlineInputBorder()),
-                validator: (value) => value == null || value.isEmpty ? 'Judul wajib diisi' : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _creditsController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Jumlah SKS (Credits)', border: OutlineInputBorder()),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Credits wajib diisi';
-                  if (int.tryParse(value) == null) return 'Credits harus berupa angka';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                value: _selectedStatus,
-                decoration: const InputDecoration(labelText: 'Status', border: OutlineInputBorder()),
-                items: const [
-                  DropdownMenuItem(value: 'planned', child: Text('Planned')),
-                  DropdownMenuItem(value: 'active', child: Text('Active')),
-                  DropdownMenuItem(value: 'completed', child: Text('Completed')),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    _selectedStatus = value!;
-                  });
-                },
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: isSaving ? null : _submitUpdate,
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, foregroundColor: Colors.white),
-                child: isSaving
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      )
-                    : const Text('Simpan Perubahan'),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

@@ -3,23 +3,21 @@
 
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/course.dart';
 
 class CourseApiService {
   CourseApiService(this.baseUrl);
 
   final String baseUrl;
 
-  // Fungsi update dengan HTTP PUT
-  Future<void> updateCourse(int id, Course course) async {
-    final response = await http.put(
+  // Fungsi DELETE course berdasarkan ID
+  Future<void> deleteCourse(int id) async {
+    final response = await http.delete(
       Uri.parse('$baseUrl/courses/$id'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(course.toJson()),
     );
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception('Gagal memperbarui course');
+      throw Exception('Gagal menghapus course');
     }
   }
 }
